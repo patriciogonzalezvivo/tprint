@@ -66,7 +66,9 @@ typedef enum {
 typedef enum {
   parity_none = 0,
   parity_odd = 1,
-  parity_even = 2
+  parity_even = 2,
+  parity_mark = 3,
+  parity_space = 4
 } parity_t;
 
 /*!
@@ -217,6 +219,20 @@ public:
   size_t
   available ();
 
+  /*! Block until there is serial data to read or read_timeout_constant
+   * number of milliseconds have elapsed. The return value is true when
+   * the function exits with the port in a readable state, false otherwise
+   * (due to timeout or select interruption). */
+  bool
+  waitReadable ();
+
+  /*! Block for a period of time corresponding to the transmission time of
+   * count characters at present serial settings. This may be used in con-
+   * junction with waitReadable to read larger blocks of data from the
+   * port. */
+  void
+  waitByteTimes (size_t count);
+
   /*! Read a given amount of bytes from the serial port into a given buffer.
    *
    * The read function will return in one of three cases:
@@ -241,6 +257,9 @@ public:
    *
    * \return A size_t representing the number of bytes read as a result of the
    *         call to read.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   size_t
   read (uint8_t *buffer, size_t size);
@@ -252,6 +271,9 @@ public:
    *
    * \return A size_t representing the number of bytes read as a result of the
    *         call to read.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   size_t
   read (std::vector<uint8_t> &buffer, size_t size = 1);
@@ -263,6 +285,9 @@ public:
    *
    * \return A size_t representing the number of bytes read as a result of the
    *         call to read.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   size_t
   read (std::string &buffer, size_t size = 1);
@@ -273,6 +298,9 @@ public:
    * \param size A size_t defining how many bytes to be read.
    *
    * \return A std::string containing the data read from the port.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   std::string
   read (size_t size = 1);
@@ -286,6 +314,9 @@ public:
    * \param eol A string to match against for the EOL.
    *
    * \return A size_t representing the number of bytes read.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   size_t
   readline (std::string &buffer, size_t size = 65536, std::string eol = "\n");
@@ -298,6 +329,9 @@ public:
    * \param eol A string to match against for the EOL.
    *
    * \return A std::string containing the line.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   std::string
   readline (size_t size = 65536, std::string eol = "\n");
@@ -312,6 +346,9 @@ public:
    * \param eol A string to match against for the EOL.
    *
    * \return A vector<string> containing the lines.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
    */
   std::vector<std::string>
   readlines (size_t size = 65536, std::string eol = "\n");
@@ -326,6 +363,10 @@ public:
    *
    * \return A size_t representing the number of bytes actually written to
    * the serial port.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
+   * \throw serial::IOException
    */
   size_t
   write (const uint8_t *data, size_t size);
@@ -337,6 +378,10 @@ public:
    *
    * \return A size_t representing the number of bytes actually written to
    * the serial port.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
+   * \throw serial::IOException
    */
   size_t
   write (const std::vector<uint8_t> &data);
@@ -348,6 +393,10 @@ public:
    *
    * \return A size_t representing the number of bytes actually written to
    * the serial port.
+   *
+   * \throw serial::PortNotOpenedException
+   * \throw serial::SerialException
+   * \throw serial::IOException
    */
   size_t
   write (const std::string &data);
@@ -358,7 +407,7 @@ public:
    * serial port, which would be something like 'COM1' on Windows and
    * '/dev/ttyS0' on Linux.
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setPort (const std::string &port);
@@ -367,7 +416,7 @@ public:
    *
    * \see Serial::setPort
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   std::string
   getPort () const;
@@ -441,7 +490,7 @@ public:
    *
    * \param baudrate An integer that sets the baud rate for the serial port.
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setBaudrate (uint32_t baudrate);
@@ -452,7 +501,7 @@ public:
    *
    * \see Serial::setBaudrate
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   uint32_t
   getBaudrate () const;
@@ -463,7 +512,7 @@ public:
    * default is eightbits, possible values are: fivebits, sixbits, sevenbits,
    * eightbits
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setBytesize (bytesize_t bytesize);
@@ -472,7 +521,7 @@ public:
    *
    * \see Serial::setBytesize
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   bytesize_t
   getBytesize () const;
@@ -482,7 +531,7 @@ public:
    * \param parity Method of parity, default is parity_none, possible values
    * are: parity_none, parity_odd, parity_even
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setParity (parity_t parity);
@@ -491,7 +540,7 @@ public:
    *
    * \see Serial::setParity
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   parity_t
   getParity () const;
@@ -501,7 +550,7 @@ public:
    * \param stopbits Number of stop bits used, default is stopbits_one,
    * possible values are: stopbits_one, stopbits_one_point_five, stopbits_two
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setStopbits (stopbits_t stopbits);
@@ -510,7 +559,7 @@ public:
    *
    * \see Serial::setStopbits
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   stopbits_t
   getStopbits () const;
@@ -521,7 +570,7 @@ public:
    * possible values are: flowcontrol_none, flowcontrol_software,
    * flowcontrol_hardware
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   void
   setFlowcontrol (flowcontrol_t flowcontrol);
@@ -530,7 +579,7 @@ public:
    *
    * \see Serial::setFlowcontrol
    *
-   * \throw InvalidConfigurationException
+   * \throw std::invalid_argument
    */
   flowcontrol_t
   getFlowcontrol () const;
@@ -600,8 +649,6 @@ private:
   // Disable copy constructors
   Serial(const Serial&);
   Serial& operator=(const Serial&);
-
-  std::string read_cache_; //!< Cache for doing reads in chunks.
 
   // Pimpl idiom, d_pointer
   class SerialImpl;
@@ -694,6 +741,32 @@ public:
     return e_what_.c_str();
   }
 };
+
+/*!
+ * Structure that describes a serial device.
+ */
+struct PortInfo {
+
+  /*! Address of the serial port (this can be passed to the constructor of Serial). */
+  std::string port;
+
+  /*! Human readable description of serial device if available. */
+  std::string description;
+
+  /*! Hardware ID (e.g. VID:PID of USB serial devices) or "n/a" if not available. */
+  std::string hardware_id;
+
+};
+
+/* Lists the serial ports available on the system
+ *
+ * Returns a vector of available serial ports, each represented
+ * by a serial::PortInfo data structure:
+ *
+ * \return vector of serial::PortInfo.
+ */
+std::vector<PortInfo>
+list_ports();
 
 } // namespace serial
 

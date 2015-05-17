@@ -40,9 +40,9 @@ bool ThermalPrinter::open(const std::string& _portName){
     
     port->flushOutput();
     
-    // setReverse(true);
+    setReverse(true);
     // println("Reverse ON");
-    setReverse(false);
+    // setReverse(false);
     
     return bConnected;
 }
@@ -201,10 +201,30 @@ void ThermalPrinter::setBarCodeWidth(uint8_t width) {
     write(29, 119, width);
 }
 
-void ThermalPrinter::print(const std::string& text){
-    if(bConnected){
-        port->write(text);
-        usleep(BYTE_TIME*text.size());
+void ThermalPrinter::print(const std::string& _text){
+    if (bConnected) {
+        // Characters perline
+        int nCharByLine = 10;
+        
+        if (_text.size() < nCharByLine ){
+            port->write(_text);
+            usleep(BYTE_TIME*_text.size());
+        } else {
+            int index = 0;
+            while (index < _text.size()){
+
+                int total = nCharByLine;
+                int end = index + nCharByLine;
+                if ( end > _text.size()){
+                    total = end-_text.size();
+                }
+                std::string rta = _text.substr(index,total);// + "\n";
+                port->write( rta);
+                usleep(BYTE_TIME*_text.size());
+
+                index += nCharByLine;
+            }
+        }
     }
 }
 
@@ -223,10 +243,6 @@ void ThermalPrinter::printBarcode(const std::string &data, BarcodeType type) {
     }
 }
 
-float getBrightness(float _r,  float _g, float _b){
-    return 0.212655 * _r + 0.715158 * _g + 0.072187 * _b;
-}
-
 void ThermalPrinter::printImg(const std::string &_path, int _threshold){
 
     int width = 0;
@@ -240,25 +256,19 @@ void ThermalPrinter::printImg(const std::string &_path, int _threshold){
     unsigned char * GrayArray = new unsigned char[GrayArrayLength];
     memset(GrayArray,0,GrayArrayLength);
     
+    std::vector<bool> data;
     for (int y = 0; y < height;y++) {
-        std::vector<bool> data;
         for (int x = 0; x < width; x++) {
             int index = (y*width)*comp+x*comp;
 
-
             float brightTemp = 0.0;
-
             if (comp == 1 || comp == 2){
                 brightTemp = pixels[index];
             } else if (comp == 3 || comp == 4 ){
-                float r = (float)pixels[index]/255.0f;
-                float g = (float)pixels[index+1]/255.0f;
-                float b = (float)pixels[index+2]/255.0f;
-
-                brightTemp = getBrightness(r,g,b)*255.0;
-                if(brightTemp>255){
-                    brightTemp = 255;
-                }
+                brightTemp =    0.212655f * (float)pixels[index] + 
+                                0.715158f * (float)pixels[index+1] + 
+                                0.072187f * (float)pixels[index+2];
+                if(brightTemp>255) brightTemp = 255;
             } 
             
             // Brightness correction curve:
@@ -299,19 +309,124 @@ void ThermalPrinter::printImg(const std::string &_path, int _threshold){
             if ((idx + 2 * width) < GrayArrayLength)
                 GrayArray[idx + 2 * width] += darkn8;
         }
-        printPixelRow(data);
+        writeBytesRow(data);
     }
     
     delete []GrayArray;
 }
 
-void ThermalPrinter::printPixelRow(std::vector<bool> _line){
+// https://github.com/patriciogonzalezvivo/ofxThermalPrinter/blob/45f8011365310549d15b0882bd2c28ee8af7a16d/src/ofxThermalPrinter.cpp
+// void ThermalPrinter::printImg(const std::string& _path, int _threshold){
+//     int width = 0;
+//     int height = 0;
+//     int comp;
+
+//     stbi_set_flip_vertically_on_load(true);
+//     unsigned char* pixels = stbi_load(_path.c_str(), &width, &height, &comp, STBI_rgb);
+    
+//     int GrayArrayLength = width * height;
+//     unsigned char * GrayArray = new unsigned char[GrayArrayLength];
+//     memset(GrayArray,0x00,GrayArrayLength);
+    
+//     int rowBytes        = (width + 7) / 8;                  // Round up to next byte boundary
+//     int rowBytesClipped = (rowBytes >= 48) ? 48 : rowBytes; // 384 pixels max width
+    
+//     int totalBytes = rowBytesClipped*height;
+//     uint8_t data[totalBytes];
+//     memset(data,0x00,totalBytes);
+    
+//     for (int i = 0; i < GrayArrayLength; i++){
+//         GrayArray[i] = 0;
+//     }
+    
+//     for (int x = 0; x < width;x++) {
+//         for (int y = 0; y < height; y++) {
+//             int index = (y*width)*comp+x*comp;
+
+//             float brightTemp = 0.0;
+//             if (comp == 1 || comp == 2){
+//                 brightTemp = pixels[index];
+//             } else if (comp == 3 || comp == 4 ){
+//                 brightTemp =    0.212655f * (float)pixels[index] + 
+//                                 0.715158f * (float)pixels[index+1] + 
+//                                 0.072187f * (float)pixels[index+2];
+//                 if(brightTemp>255) brightTemp = 255;
+//             } 
+            
+//             // Brightness correction curve:
+//             brightTemp =  sqrt(255) * sqrt (brightTemp);
+//             if (brightTemp > 255) brightTemp = 255;
+//             if (brightTemp < 0) brightTemp = 0;
+            
+//             int darkness = 255 - floor(brightTemp);
+            
+//             int idx = y*width + x;
+//             darkness += GrayArray[idx];
+            
+//             if(x<rowBytesClipped*8){
+                
+//                 uint8_t pixel;
+//                 if( darkness >= _threshold){
+//                     darkness -= _threshold;
+//                     pixel = 0x01;
+//                 } else {
+//                     pixel = 0x00;
+//                 }
+                
+//                 data[y*rowBytesClipped+x/8] += (pixel&0x01)<<(7-x%8);
+//             }
+            
+//             int darkn8 = round(darkness / 8);
+            
+//             // Atkinson dithering algorithm:  http://verlagmartinkoch.at/software/dither/index.html
+//             // Distribute error as follows:
+//             //     [ ]  1/8  1/8
+//             //1/8  1/8  1/8
+//             //     1/8
+            
+//             if ((idx + 1) < GrayArrayLength)
+//                 GrayArray[idx + 1] += darkn8;
+//             if ((idx + 2) < GrayArrayLength)
+//                 GrayArray[idx + 2] += darkn8;
+//             if ((idx + width - 1) < GrayArrayLength)
+//                 GrayArray[idx + width - 1] += darkn8;
+//             if ((idx + width) < GrayArrayLength)
+//                 GrayArray[idx + width] += darkn8;
+//             if ((idx + width + 1) < GrayArrayLength)
+//                 GrayArray[idx + width + 1 ] += darkn8;
+//             if ((idx + 2 * width) < GrayArrayLength)
+//                 GrayArray[idx + 2 * width] += darkn8;
+//         }
+//     }
+    
+//     for (int y=0; y<height; y++) {
+//         writeBytesRow(&data[y*rowBytesClipped],rowBytesClipped);
+//     }
+
+//     delete []GrayArray;
+// }
+
+void ThermalPrinter::writeBytesRow(const uint8_t *_array, int _width) {
+    if(_width>48)
+        _width = 48;
+    
+    const uint8_t command[4] = {18, 42, 1, (uint8_t)_width};
+    port->write(command, 4);
+    usleep(BYTE_TIME*4);
+    
+    for (int x=0; x<_width; x++) {
+        port->write(&_array[_width+x],1);
+        usleep(BYTE_TIME);
+    }
+}
+
+void ThermalPrinter::writeBytesRow(std::vector<bool> _line){
     if(bConnected){
         int width = _line.size();
-        if(width>384)
+        if( width > 384)
             width = 384;
         
-        int rowBytes        = (width + 7) / 8;                 // Round up to next byte boundary
+        int rowBytes = (width + 7) / 8; // Round up to next byte boundary
         uint8_t rowBytesClipped = (rowBytes >= 48) ? 48 : rowBytes; // 384 pixels max width
         
         uint8_t data[rowBytesClipped];
@@ -333,6 +448,3 @@ void ThermalPrinter::printPixelRow(std::vector<bool> _line){
         usleep(BYTE_TIME*rowBytesClipped);
     }
 }
-
-
-

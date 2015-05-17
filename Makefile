@@ -31,6 +31,7 @@ CFLAGS += -DPLATFORM_LINUX
 
 else ifeq ($(PLATFORM),OSX)
 CFLAGS += -DPLATFORM_OSX -stdlib=libc++
+LDFLAGS += -framework CoreFoundation -framework IOKit
 endif
 
 all: $(EXE)

@@ -122,8 +122,6 @@ public:
     void    println(const std::string& _line);
     void    printImg(const std::string& _imgFile, int threshold=127);
     void    printBarcode(const std::string &data, BarcodeType type=UPCA);
-
-    void    printPixelRow( std::vector<bool> _row );
     
 private:
     void    write(const uint8_t &_a);
@@ -131,9 +129,8 @@ private:
     void    write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c );
     void    write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c, const uint8_t &_d);
     void    write(const uint8_t *_array, int _size);
-    
-    void    addToBuffer(std::vector<bool> _line);
-    void    threadedFunction();
+    void    writeBytesRow(const uint8_t *_array, int _width);
+    void    writeBytesRow(std::vector<bool> _line);
     
     SharedSerial    port;
     
