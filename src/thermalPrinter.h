@@ -1,13 +1,3 @@
-//  Created by Patricio Gonzalez Vivo on 3/16/14.
-//
-//  References from:
-//
-//      -   Adafruit Arduino Driver https://github.com/adafruit/Adafruit-Thermal-Printer-Library
-//      -   Python Implementation https://github.com/luopio/py-thermal-printer
-//      -   QT C++ https://github.com/thefloe1/Raspi-Thermal-Printer
-//      -   Christopher Baker's OpenFrameworks Addon https://github.com/bakercp/ofxESCPOS
-//
-
 #pragma once
 
 #include <vector>
