@@ -228,11 +228,6 @@ void ThermalPrinter::print(const std::string& _text){
     }
 }
 
-
-void ThermalPrinter::println(const std::string& text){
-    print(text+"\n");
-}
-
 // prints a barcode
 void ThermalPrinter::printBarcode(const std::string &data, BarcodeType type) {
     if(bConnected){

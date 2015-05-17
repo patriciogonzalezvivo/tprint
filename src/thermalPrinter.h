@@ -119,9 +119,8 @@ public:
     void    setBarCodeWidth(uint8_t width=3);
     
     void    print(const std::string& _line);
-    void    println(const std::string& _line);
     void    printImg(const std::string& _imgFile, int threshold=127);
-    void    printBarcode(const std::string &data, BarcodeType type=UPCA);
+    void    printBar(const std::string &data, BarcodeType type=UPCA);
     
 private:
     void    write(const uint8_t &_a);
