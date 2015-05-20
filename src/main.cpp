@@ -32,13 +32,13 @@ int main(int argc, char **argv){
 
     //  Get a list of ports
     std::vector<serial::PortInfo> ports = serial::list_ports();
-    // for (uint i = 0; i < ports.size(); i++){
-    //     std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
-    // }
+    for (uint i = 0; i < ports.size(); i++){
+        std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
+    }
 
     //  Find the one with the Thermo-Printer
     //
-    std::string port = "/dev/cu.usbserial"; //"/dev/tty.PL2303-00002014"
+    std::string port = "/dev/cu.usbserial"; 
 
     // Contect the printer to the port
     //printer.open(port);
@@ -66,7 +66,6 @@ int main(int argc, char **argv){
     if (text.size() > 0){
         printer.print(text);
     }
-
 
     return 0;
 }

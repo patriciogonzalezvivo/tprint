@@ -229,7 +229,7 @@ void ThermalPrinter::print(const std::string& _text){
 }
 
 // prints a barcode
-void ThermalPrinter::printBarcode(const std::string &data, BarcodeType type) {
+void ThermalPrinter::printBar(const std::string &data, BarcodeType type) {
     if(bConnected){
         write(29, 107, type);
         port->write(data);
