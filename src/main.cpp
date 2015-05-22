@@ -31,17 +31,20 @@ ThermalPrinter printer;
 int main(int argc, char **argv){
 
     //  Get a list of ports
+    std::string port = "NONE";
     std::vector<serial::PortInfo> ports = serial::list_ports();
     for (uint i = 0; i < ports.size(); i++){
         std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
+        std::string::size_type found = ports[i].description.find("Prolific Technology Inc. USB-Serial Controller");
+        if (found != std::string::npos){
+            port = ports[i].port;
+            break;
+        }
     }
 
-    //  Find the one with the Thermo-Printer
-    //
-    std::string port = "/dev/cu.usbserial"; 
-
     // Contect the printer to the port
-    //printer.open(port);
+    std::cout << "Connecting... [" << port << "]" << std::endl;
+    printer.open(port);
 
     std::string text = "";
     // Load files to watch
@@ -63,9 +66,11 @@ int main(int argc, char **argv){
         }
     }
 
-    if (text.size() > 0){
+    if (text.size() > 1){
         printer.print(text);
     }
+
+    // printer.close();
 
     return 0;
 }

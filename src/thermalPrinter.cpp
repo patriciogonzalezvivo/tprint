@@ -34,16 +34,21 @@ bool ThermalPrinter::open(const std::string& _portName){
     reset();
     usleep(50000);
     
-    setControlParameter();
-    setPrintDensity();
+    // heatingDots (def. 20)/ heatingTime (def. 200)/ heatingInterval (def. 250)
+    setControlParameter(20, 100, 250);
+
+    // printDensity (def. 14) / printBreakTime (def.4)
+    setPrintDensity(14,40);
     setStatus(true);
-    
-    port->flushOutput();
-    
-    setReverse(true);
-    // println("Reverse ON");
+
+    // port->flushOutput();
+
+    // setReverse(true);
+    // print("Reverse ON\n");
     // setReverse(false);
     
+    feed();
+
     return bConnected;
 }
 
@@ -238,8 +243,7 @@ void ThermalPrinter::printBar(const std::string &data, BarcodeType type) {
     }
 }
 
-void ThermalPrinter::printImg(const std::string &_path, int _threshold){
-
+void ThermalPrinter::printImg(const std::string& _path, int _threshold){
     int width = 0;
     int height = 0;
     int comp;
@@ -249,11 +253,21 @@ void ThermalPrinter::printImg(const std::string &_path, int _threshold){
     
     int GrayArrayLength = width * height;
     unsigned char * GrayArray = new unsigned char[GrayArrayLength];
-    memset(GrayArray,0,GrayArrayLength);
+    memset(GrayArray,0x00,GrayArrayLength);
     
-    std::vector<bool> data;
-    for (int y = 0; y < height;y++) {
-        for (int x = 0; x < width; x++) {
+    int rowBytes        = (width + 7) / 8;                  // Round up to next byte boundary
+    int rowBytesClipped = (rowBytes >= 48) ? 48 : rowBytes; // 384 pixels max width
+    
+    int totalBytes = rowBytesClipped*height;
+    uint8_t data[totalBytes];
+    memset(data,0x00,totalBytes);
+    
+    for (int i = 0; i < GrayArrayLength; i++){
+        GrayArray[i] = 0;
+    }
+    
+    for (int x = 0; x < width;x++) {
+        for (int y = 0; y < height; y++) {
             int index = (y*width)*comp+x*comp;
 
             float brightTemp = 0.0;
@@ -276,11 +290,17 @@ void ThermalPrinter::printImg(const std::string &_path, int _threshold){
             int idx = y*width + x;
             darkness += GrayArray[idx];
             
-            if( darkness >= _threshold){
-                darkness -= _threshold;
-                data.push_back(true);
-            } else {
-                data.push_back(false);
+            if(x<rowBytesClipped*8){
+                
+                uint8_t pixel;
+                if( darkness >= _threshold){
+                    darkness -= _threshold;
+                    pixel = 0x01;
+                } else {
+                    pixel = 0x00;
+                }
+                
+                data[y*rowBytesClipped+x/8] += (pixel&0x01)<<(7-x%8);
             }
             
             int darkn8 = round(darkness / 8);
@@ -304,102 +324,15 @@ void ThermalPrinter::printImg(const std::string &_path, int _threshold){
             if ((idx + 2 * width) < GrayArrayLength)
                 GrayArray[idx + 2 * width] += darkn8;
         }
-        writeBytesRow(data);
     }
     
+    for (int y=0; y<height; y++) {
+        writeBytesRow(&data[y*rowBytesClipped],rowBytesClipped);
+    }
+
     delete []GrayArray;
+    // port->flushOutput();
 }
-
-// https://github.com/patriciogonzalezvivo/ofxThermalPrinter/blob/45f8011365310549d15b0882bd2c28ee8af7a16d/src/ofxThermalPrinter.cpp
-// void ThermalPrinter::printImg(const std::string& _path, int _threshold){
-//     int width = 0;
-//     int height = 0;
-//     int comp;
-
-//     stbi_set_flip_vertically_on_load(true);
-//     unsigned char* pixels = stbi_load(_path.c_str(), &width, &height, &comp, STBI_rgb);
-    
-//     int GrayArrayLength = width * height;
-//     unsigned char * GrayArray = new unsigned char[GrayArrayLength];
-//     memset(GrayArray,0x00,GrayArrayLength);
-    
-//     int rowBytes        = (width + 7) / 8;                  // Round up to next byte boundary
-//     int rowBytesClipped = (rowBytes >= 48) ? 48 : rowBytes; // 384 pixels max width
-    
-//     int totalBytes = rowBytesClipped*height;
-//     uint8_t data[totalBytes];
-//     memset(data,0x00,totalBytes);
-    
-//     for (int i = 0; i < GrayArrayLength; i++){
-//         GrayArray[i] = 0;
-//     }
-    
-//     for (int x = 0; x < width;x++) {
-//         for (int y = 0; y < height; y++) {
-//             int index = (y*width)*comp+x*comp;
-
-//             float brightTemp = 0.0;
-//             if (comp == 1 || comp == 2){
-//                 brightTemp = pixels[index];
-//             } else if (comp == 3 || comp == 4 ){
-//                 brightTemp =    0.212655f * (float)pixels[index] + 
-//                                 0.715158f * (float)pixels[index+1] + 
-//                                 0.072187f * (float)pixels[index+2];
-//                 if(brightTemp>255) brightTemp = 255;
-//             } 
-            
-//             // Brightness correction curve:
-//             brightTemp =  sqrt(255) * sqrt (brightTemp);
-//             if (brightTemp > 255) brightTemp = 255;
-//             if (brightTemp < 0) brightTemp = 0;
-            
-//             int darkness = 255 - floor(brightTemp);
-            
-//             int idx = y*width + x;
-//             darkness += GrayArray[idx];
-            
-//             if(x<rowBytesClipped*8){
-                
-//                 uint8_t pixel;
-//                 if( darkness >= _threshold){
-//                     darkness -= _threshold;
-//                     pixel = 0x01;
-//                 } else {
-//                     pixel = 0x00;
-//                 }
-                
-//                 data[y*rowBytesClipped+x/8] += (pixel&0x01)<<(7-x%8);
-//             }
-            
-//             int darkn8 = round(darkness / 8);
-            
-//             // Atkinson dithering algorithm:  http://verlagmartinkoch.at/software/dither/index.html
-//             // Distribute error as follows:
-//             //     [ ]  1/8  1/8
-//             //1/8  1/8  1/8
-//             //     1/8
-            
-//             if ((idx + 1) < GrayArrayLength)
-//                 GrayArray[idx + 1] += darkn8;
-//             if ((idx + 2) < GrayArrayLength)
-//                 GrayArray[idx + 2] += darkn8;
-//             if ((idx + width - 1) < GrayArrayLength)
-//                 GrayArray[idx + width - 1] += darkn8;
-//             if ((idx + width) < GrayArrayLength)
-//                 GrayArray[idx + width] += darkn8;
-//             if ((idx + width + 1) < GrayArrayLength)
-//                 GrayArray[idx + width + 1 ] += darkn8;
-//             if ((idx + 2 * width) < GrayArrayLength)
-//                 GrayArray[idx + 2 * width] += darkn8;
-//         }
-//     }
-    
-//     for (int y=0; y<height; y++) {
-//         writeBytesRow(&data[y*rowBytesClipped],rowBytesClipped);
-//     }
-
-//     delete []GrayArray;
-// }
 
 void ThermalPrinter::writeBytesRow(const uint8_t *_array, int _width) {
     if(_width>48)
@@ -409,37 +342,6 @@ void ThermalPrinter::writeBytesRow(const uint8_t *_array, int _width) {
     port->write(command, 4);
     usleep(BYTE_TIME*4);
     
-    for (int x=0; x<_width; x++) {
-        port->write(&_array[_width+x],1);
-        usleep(BYTE_TIME);
-    }
-}
-
-void ThermalPrinter::writeBytesRow(std::vector<bool> _line){
-    if(bConnected){
-        int width = _line.size();
-        if( width > 384)
-            width = 384;
-        
-        int rowBytes = (width + 7) / 8; // Round up to next byte boundary
-        uint8_t rowBytesClipped = (rowBytes >= 48) ? 48 : rowBytes; // 384 pixels max width
-        
-        uint8_t data[rowBytesClipped];
-        memset(data,0x00,rowBytesClipped);
-        
-        for (int i = 0; i < width; i++) {
-            uint8_t bit = 0x00;
-            if (_line[i]){
-                bit = 0x01;
-            }
-            data[i/8] += (bit&0x01)<<(7-i%8);
-        }
-        
-        const uint8_t command[4] = {18, 42, 1, rowBytesClipped};
-        port->write(command, 4);
-        usleep(BYTE_TIME*4);
-        
-        port->write(data,rowBytesClipped);
-        usleep(BYTE_TIME*rowBytesClipped);
-    }
+    port->write(_array,_width);
+    usleep(BYTE_TIME*_width);
 }
