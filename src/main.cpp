@@ -68,7 +68,7 @@ int main(int argc, char **argv){
             printer.print(text+"\n");
         } else if (argument == "-s") {
             std::string text = "";
-            for (uint j = i+1; j < argc ; j++){
+            for (int j = i+1; j < argc ; j++){
                 text += std::string(argv[j]) + " ";
             }
             printer.print(text+"\n");
