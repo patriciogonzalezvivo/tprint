@@ -35,7 +35,7 @@ bool ThermalPrinter::open(const std::string& _portName){
     usleep(50000);
     
     // heatingDots (def. 20)/ heatingTime (def. 200)/ heatingInterval (def. 250)
-    setControlParameter(20, 100, 250);
+    setControlParameter(200, 100, 250);
 
     // printDensity (def. 14) / printBreakTime (def.4)
     setPrintDensity(14,40);
@@ -248,7 +248,7 @@ void ThermalPrinter::printImg(const std::string& _path, int _threshold){
     int height = 0;
     int comp;
 
-    stbi_set_flip_vertically_on_load(true);
+    stbi_set_flip_vertically_on_load(false);
     unsigned char* pixels = stbi_load(_path.c_str(), &width, &height, &comp, STBI_rgb);
     
     int GrayArrayLength = width * height;
@@ -262,9 +262,9 @@ void ThermalPrinter::printImg(const std::string& _path, int _threshold){
     uint8_t data[totalBytes];
     memset(data,0x00,totalBytes);
     
-    for (int i = 0; i < GrayArrayLength; i++){
-        GrayArray[i] = 0;
-    }
+    // for (int i = 0; i < GrayArrayLength; i++){
+    //     GrayArray[i] = 0;
+    // }
     
     for (int x = 0; x < width;x++) {
         for (int y = 0; y < height; y++) {
@@ -331,7 +331,7 @@ void ThermalPrinter::printImg(const std::string& _path, int _threshold){
     }
 
     delete []GrayArray;
-    // port->flushOutput();
+    delete []pixels;
 }
 
 void ThermalPrinter::writeBytesRow(const uint8_t *_array, int _width) {

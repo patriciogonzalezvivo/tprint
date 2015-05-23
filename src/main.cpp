@@ -34,7 +34,7 @@ int main(int argc, char **argv){
     std::string port = "NONE";
     std::vector<serial::PortInfo> ports = serial::list_ports();
     for (uint i = 0; i < ports.size(); i++){
-        std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
+        // std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
         std::string::size_type found = ports[i].description.find("Prolific Technology Inc. USB-Serial Controller");
         if (found != std::string::npos){
             port = ports[i].port;
@@ -43,34 +43,39 @@ int main(int argc, char **argv){
     }
 
     // Contect the printer to the port
-    std::cout << "Connecting... [" << port << "]" << std::endl;
-    printer.open(port);
+    std::cout << "Connecting to port [" << port << "] ";
+    if (printer.open(port)){
+        std::cout << "successfully."<< std::endl;
+    } else {
+        std::cout << "error."<< std::endl;
+        return 0;
+    }
 
-    std::string text = "";
     // Load files to watch
     for (uint i = 1; i < argc ; i++){
-        std::string argument = std::string(argv[i]);
 
+        std::string argument = std::string(argv[i]);
         if (    haveExt(argument,"png") || haveExt(argument,"PNG") ||
                 haveExt(argument,"jpg") || haveExt(argument,"JPG") || 
                 haveExt(argument,"jpeg") || haveExt(argument,"JPEG") ){
             // Load Image and print it
             printer.printImg(argument);
-            text = "";
         } else if ( haveExt(argument,"txt") || haveExt(argument,"TXT") ||
                     haveExt(argument,"md") || haveExt(argument,"MD") ){
             // Load Text to print
+            std::string text = "";
             loadFromPath(argument,&text);
-        } else {
-            text += argument + " ";
+            printer.print(text+"\n");
+        } else if (argument == "-s") {
+            std::string text = "";
+            for (uint j = i+1; j < argc ; j++){
+                text += std::string(argv[j]) + " ";
+            }
+            printer.print(text+"\n");
+            break;
         }
     }
 
-    if (text.size() > 1){
-        printer.print(text);
-    }
-
-    // printer.close();
-
+    printer.close();
     return 0;
 }
