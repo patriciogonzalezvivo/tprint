@@ -37,54 +37,70 @@ bool ThermalPrinter::open(const std::string& _portName){
     reset();
     usleep(50000);
     
-    // heatingDots (def. 20)/ heatingTime (def. 200)/ heatingInterval (def. 250)
-    setControlParameter(20, 100, 250);
-
-    // printDensity (def. 14) / printBreakTime (def.4)
+    setControlParameter(7, 120, 2);
+    // Set “max heating dots”,”heating time”, “heating interval”
+    // n1 = 0-255 Max printing dots,Unit(8dots),Default:7(64 dots)
+    // n2 = 3-255 Heating time,Unit(10us),Default:80(800us)
+    // n3 = 0-255 Heating interval,Unit(10us),Default:2(20us)
+    // The more max heting dots, the more peak current will cost
+    // whenprinting, the faster printing speed. The max heating dots is 8*(n1+1)
+    // The more heating time, the more density , but the slower printing speed. If heating time is too short, blank page may occur.
+    // The more heating interval, the more clear, but the slower
+    
+    // printDensity (def. 14) / printBreakTime (def.40)
     setPrintDensity(14,40);
     setStatus(true);
 
-    // port->flushOutput();
-
-    // setReverse(true);
-    // print("Reverse ON\n");
-    // setReverse(false);
+    port->flushOutput();
     
     feed();
 
     return bConnected;
 }
 
-void ThermalPrinter::write(const uint8_t &_a){
-    if(bConnected){
-        port->write(&_a, 1);
-        usleep(BYTE_TIME);
-    }
+// Set “max heating dots”,”heating time”, “heating interval”
+// n1 = 0-255 Max printing dots,Unit(8dots),Default:7(64 dots)
+// n2 = 3-255 Heating time,Unit(10us),Default:80(800us)
+// n3 = 0-255 Heating interval,Unit(10us),Default:2(20us)
+// The more max heting dots, the more peak current will cost
+// whenprinting, the faster printing speed. The max heating dots is 8*(n1+1)
+// The more heating time, the more density , but the slower printing speed. If heating time is too short, blank page may occur.
+// The more heating interval, the more clear, but the slower
+//
+//        ASCII: ESC 7 n1 n2 n3 
+//      Decimal: 27 55 n1 n2 n3 
+//  Hexadecimal: 1B 37 n1 n2 n3
+//
+void ThermalPrinter::setControlParameter(uint8_t maxHeatingDots, uint8_t heatingTime, uint8_t heatingInterval) {
+    write(27,55);
+    write(maxHeatingDots);
+    write(heatingTime);
+    write(heatingInterval);
 }
 
-void ThermalPrinter::write(const uint8_t &_a,const uint8_t &_b ){
-    const uint8_t command[2] = { _a, _b };
-    write(command, 2);
-    usleep(BYTE_TIME*2);
+//  Setting the time for control board to enter sleep mode.
+//  n1 = 0-255 The time waiting for sleep after printing finished, Unit(Second),Default:0(don’t sleep)
+//  When control board is in sleep mode, host must send one byte(0xff) to wake up control board. And waiting 50ms, then send printing command and data.
+//  NOTE:The command is useful when the system is powered by battery.
+//
+//        ASCII: ESC 8 n1 
+//      Decimal: 27 56 n1 
+//  Hexadecimal: 1B 38 n1
+//
+void ThermalPrinter::setSleepTime(uint8_t seconds) {
+    write(27, 56, seconds);
+    // write(0xFF);
 }
 
-void ThermalPrinter::write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c ){
-    const uint8_t command[3] = { _a, _b, _c };
-    write(command, 3);
-    usleep(BYTE_TIME*3);
-}
-
-void ThermalPrinter::write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c, const uint8_t &_d){
-    const uint8_t command[4] = { _a, _b, _c, _b };
-    write(command, 4);
-    usleep(BYTE_TIME*4);
-}
-
-void ThermalPrinter::write(const uint8_t *_array, int _size){
-    if(bConnected){
-        port->write(_array, _size);
-        usleep(BYTE_TIME*_size);
-    }
+//  D4..D0 of n is used to set the printing density Density is 50% + 5% * n(D4-D0) printing density
+//  D7..D5 of n is used to set the printing break time Break time is n(D7-D5)*250us
+//
+//        ASCII: DC2 # n 
+//      Decimal: 18 35 n 
+//  Hexadecimal: 12 23 n
+//
+void ThermalPrinter::setPrintDensity(uint8_t printDensity, uint8_t printBreakTime) {
+    write(18, 35, (printBreakTime << 5) | printDensity );
 }
 
 void ThermalPrinter::close(){
@@ -103,29 +119,9 @@ void ThermalPrinter::setStatus(bool state) {
     write(27,61,state);
 }
 
-// set control parameters: heatingDots, heatingTime, heatingInterval
-void ThermalPrinter::setControlParameter(uint8_t heatingDots, uint8_t heatingTime, uint8_t heatingInterval) {
-    write(27,55);
-    write(heatingDots);
-    write(heatingTime);
-    write(heatingInterval);
-}
-
-// set sleep Time in seconds, time after last print the printer should stay awake
-void ThermalPrinter::setSleepTime(uint8_t seconds) {
-    write(27, 56, seconds);
-    write(0xFF);
-}
-
 // set double width mode: on=true, off=false
 void ThermalPrinter::setDoubleWidth(bool state) {
     write(27, state?14:20);
-}
-
-
-// set the print density and break time
-void ThermalPrinter::setPrintDensity(uint8_t printDensity, uint8_t printBreakTime) {
-    write(18, 35, (printBreakTime << 5) | printDensity );
 }
 
 // set the used character set
@@ -209,30 +205,35 @@ void ThermalPrinter::setBarCodeWidth(uint8_t width) {
     write(29, 119, width);
 }
 
+//  Printing the test page
+//
+//        ASCII: DC2 T 
+//      Decimal: 18 84 
+//  Hexadecimal: 12 54
+void ThermalPrinter::printTestPage(){
+    write(18,84);
+}
+
 void ThermalPrinter::print(const std::string& _text){
     if (bConnected) {
         // Characters perline
-        int nCharByLine = 10;
-        
-        if (_text.size() < nCharByLine ){
-            port->write(_text);
+        uint nCharByLine = 32;
+
+        int index = 0;
+        while (index+nCharByLine < _text.size()){
+            std::string rta = _text.substr(index,nCharByLine);
+            port->write(rta);
             usleep(BYTE_TIME*_text.size());
-        } else {
-            int index = 0;
-            while (index < _text.size()){
-
-                int total = nCharByLine;
-                int end = index + nCharByLine;
-                if ( end > _text.size()){
-                    total = end-_text.size();
-                }
-                std::string rta = _text.substr(index,total);// + "\n";
-                port->write( rta);
-                usleep(BYTE_TIME*_text.size());
-
-                index += nCharByLine;
-            }
+            index += nCharByLine;
         }
+
+        int rest = _text.size() % nCharByLine;
+        std::string remainer = _text.substr(index,rest);
+        for(int i = 0; i < nCharByLine-rest; i++){
+            remainer += " ";
+        }
+        port->write(remainer);
+        usleep(BYTE_TIME*_text.size());
     }
 }
 
@@ -264,10 +265,6 @@ void ThermalPrinter::printImg(const std::string& _path, int _threshold){
     int totalBytes = rowBytesClipped*height;
     uint8_t data[totalBytes];
     memset(data,0x00,totalBytes);
-    
-    // for (int i = 0; i < GrayArrayLength; i++){
-    //     GrayArray[i] = 0;
-    // }
     
     for (int x = 0; x < width;x++) {
         for (int y = 0; y < height; y++) {
@@ -338,13 +335,47 @@ void ThermalPrinter::printImg(const std::string& _path, int _threshold){
 }
 
 void ThermalPrinter::writeBytesRow(const uint8_t *_array, int _width) {
-    if(_width>48)
-        _width = 48;
-    
-    const uint8_t command[4] = {18, 42, 1, (uint8_t)_width};
-    port->write(command, 4);
+    if(bConnected){
+        if(_width>48)
+            _width = 48;
+        
+        const uint8_t command[4] = {18, 42, 1, (uint8_t)_width};
+        port->write(command, 4);
+        usleep(BYTE_TIME*4);
+        
+        port->write(_array,_width);
+        usleep(BYTE_TIME*_width);
+    }
+}
+
+void ThermalPrinter::write(const uint8_t &_a){
+    if(bConnected){
+        port->write(&_a, 1);
+        usleep(BYTE_TIME);
+    }
+}
+
+void ThermalPrinter::write(const uint8_t &_a,const uint8_t &_b ){
+    const uint8_t command[2] = { _a, _b };
+    write(command, 2);
+    usleep(BYTE_TIME*2);
+}
+
+void ThermalPrinter::write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c ){
+    const uint8_t command[3] = { _a, _b, _c };
+    write(command, 3);
+    usleep(BYTE_TIME*3);
+}
+
+void ThermalPrinter::write(const uint8_t &_a, const uint8_t &_b, const uint8_t &_c, const uint8_t &_d){
+    const uint8_t command[4] = { _a, _b, _c, _b };
+    write(command, 4);
     usleep(BYTE_TIME*4);
-    
-    port->write(_array,_width);
-    usleep(BYTE_TIME*_width);
+}
+
+void ThermalPrinter::write(const uint8_t *_array, int _size){
+    if(bConnected){
+        port->write(_array, _size);
+        usleep(BYTE_TIME*_size);
+    }
 }

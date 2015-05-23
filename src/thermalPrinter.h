@@ -82,7 +82,7 @@ public:
     void    close();
     void    reset();
     
-    void    setControlParameter(uint8_t heatingDots=20, uint8_t heatingTime=200, uint8_t heatingInterval=250);
+    void    setControlParameter(uint8_t maxHeatingDots=7, uint8_t heatingTime=80, uint8_t heatingInterval=2);
     void    setSleepTime(uint8_t seconds = 0);
     void    setStatus(bool state=true);
     void    setPrintDensity(uint8_t printDensity=14, uint8_t printBreakTime=4);
@@ -109,6 +109,7 @@ public:
     void    print(const std::string& _line);
     void    printImg(const std::string& _imgFile, int threshold=127);
     void    printBar(const std::string &data, BarcodeType type=UPCA);
+    void    printTestPage();
     
 private:
     void    write(const uint8_t &_a);

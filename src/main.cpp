@@ -76,6 +76,10 @@ int main(int argc, char **argv){
         }
     }
 
-    printer.close();
+    if (argc == 0){
+        printer.printTestPage();
+    }
+
+    // printer.close();
     return 0;
 }
