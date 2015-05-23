@@ -1,4 +1,4 @@
-#include "ThermalPrinter.h"
+#include "thermalPrinter.h"
 
 #include <unistd.h>
 #include <iostream>
