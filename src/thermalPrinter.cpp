@@ -6,21 +6,24 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "std/stb_image.h"
 
-ThermalPrinter::ThermalPrinter(): bConnected(false){
+ThermalPrinter::ThermalPrinter(): port(NULL), bConnected(false){
 }
 
 ThermalPrinter::~ThermalPrinter() {
+    if (port == NULL){
+        delete port;
+    }
 }
 
 bool ThermalPrinter::open(const std::string& _portName){
     try {
-        port = SharedSerial(new serial::Serial( _portName,
-                                               BAUDRATE,
-                                               serial::Timeout::simpleTimeout(1000),
-                                               serial::eightbits,
-                                               serial::parity_none,
-                                               serial::stopbits_one,
-                                               serial::flowcontrol_none ));
+        port = new serial::Serial( _portName,
+                                   BAUDRATE,
+                                   serial::Timeout::simpleTimeout(1000),
+                                   serial::eightbits,
+                                   serial::parity_none,
+                                   serial::stopbits_one,
+                                   serial::flowcontrol_none );
     }
     
     catch (const std::exception& exc){
@@ -35,7 +38,7 @@ bool ThermalPrinter::open(const std::string& _portName){
     usleep(50000);
     
     // heatingDots (def. 20)/ heatingTime (def. 200)/ heatingInterval (def. 250)
-    setControlParameter(200, 100, 250);
+    setControlParameter(20, 100, 250);
 
     // printDensity (def. 14) / printBreakTime (def.4)
     setPrintDensity(14,40);

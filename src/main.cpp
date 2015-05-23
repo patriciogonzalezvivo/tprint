@@ -52,7 +52,7 @@ int main(int argc, char **argv){
     }
 
     // Load files to watch
-    for (uint i = 1; i < argc ; i++){
+    for (int i = 1; i < argc ; i++){
 
         std::string argument = std::string(argv[i]);
         if (    haveExt(argument,"png") || haveExt(argument,"PNG") ||

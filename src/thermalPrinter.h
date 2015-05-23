@@ -68,8 +68,6 @@ enum BarcodeType {
     MSI
 };
 
-typedef std::shared_ptr<serial::Serial> SharedSerial;
-
 struct PixelsLine{
     bool *data;
     int size;
@@ -121,7 +119,6 @@ private:
     void    writeBytesRow(const uint8_t *_array, int _width);
     void    writeBytesRow(std::vector<bool> _line);
     
-    SharedSerial    port;
-    
+    serial::Serial* port;
     bool    bConnected;
 };
