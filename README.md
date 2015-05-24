@@ -20,9 +20,9 @@ If you are running ```tprint``` from a desktop or laptop computer you need to co
 
 After connecting the thermo printer’s 1 and 3 pins to a power supply ([see this link](https://learn.adafruit.com/mini-thermal-receipt-printer/power)) you need to connect the ground (4 - GND) and receive (5 - RXD) pins to the ground (GND) and send (TXD) pins of your [RaspberryPi](https://www.adafruit.com/products/2358) or [USB to TTL cable like this one](https://www.adafruit.com/product/954)
 
-![](wiring-ref-02.png)
+![](doc/wiring-ref-02.png)
 
-![](wiring-ref-01.jpg)
+![](doc/wiring-ref-01.jpg)
 
 ### Compiling and Installing
 
