@@ -20,7 +20,8 @@
 #include <pthread.h>
 
 #if defined(__linux__)
-# include <serial.h>
+#include "serial.h"
+#include <linux/serial_core.h>
 #endif
 
 #include <sys/select.h>

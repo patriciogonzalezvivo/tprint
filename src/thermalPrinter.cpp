@@ -219,7 +219,7 @@ void ThermalPrinter::print(const std::string& _text){
         // Characters perline
         uint nCharByLine = 32;
 
-        int index = 0;
+        uint index = 0;
         while (index+nCharByLine < _text.size()){
             std::string rta = _text.substr(index,nCharByLine);
             port->write(rta);
@@ -227,9 +227,9 @@ void ThermalPrinter::print(const std::string& _text){
             index += nCharByLine;
         }
 
-        int rest = _text.size() % nCharByLine;
+        uint rest = _text.size() % nCharByLine;
         std::string remainer = _text.substr(index,rest);
-        for(int i = 0; i < nCharByLine-rest; i++){
+        for(uint i = 0; i < nCharByLine-rest; i++){
             remainer += " ";
         }
         port->write(remainer);
