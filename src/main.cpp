@@ -31,7 +31,12 @@ ThermalPrinter printer;
 int main(int argc, char **argv){
 
     //  Get a list of ports
+#ifdef PLATFORM_RPI
+    std::string port = "/dev/ttyAMA0";
+#else
     std::string port = "NONE";
+#endif
+
     std::vector<serial::PortInfo> ports = serial::list_ports();
     for (uint i = 0; i < ports.size(); i++){
         // std::cout << ports[i].port << " - " << ports[i].description << " - " << ports[i].hardware_id << std::endl;
