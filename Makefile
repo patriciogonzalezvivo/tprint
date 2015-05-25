@@ -25,6 +25,7 @@ endif
 
 ifeq ($(PLATFORM),RPI)
 CFLAGS += -DPLATFORM_RPI -Wno-psabi
+LDFLAGS += -lrt
 
 else ifeq ($(PLATFORM),LINUX)
 CFLAGS += -DPLATFORM_LINUX
