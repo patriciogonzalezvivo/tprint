@@ -50,6 +50,8 @@ int main(int argc, char **argv){
     // Contect the printer to the port
     std::cout << "Connecting to port [" << port << "] ";
     if (printer.open(port)){
+        printer.setControlParameter(7, 100, 2);
+        // printer.setPrintDensity(100,40);
         std::cout << "successfully."<< std::endl;
     } else {
         std::cout << "error."<< std::endl;

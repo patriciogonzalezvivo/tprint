@@ -37,7 +37,7 @@ bool ThermalPrinter::open(const std::string& _portName){
     reset();
     usleep(50000);
     
-    setControlParameter(7, 80, 2);
+    setControlParameter(7, 100, 2);
     // Set “max heating dots”,”heating time”, “heating interval”
     // n1 = 0-255 Max printing dots,Unit(8dots),Default:7(64 dots)
     // n2 = 3-255 Heating time,Unit(10us),Default:80(800us)
@@ -48,7 +48,7 @@ bool ThermalPrinter::open(const std::string& _portName){
     // The more heating interval, the more clear, but the slower
     
     // printDensity (def. 14) / printBreakTime (def.40)
-    setPrintDensity(14,40);
+    // setPrintDensity(14,40);
     setStatus(true);
 
     port->flushOutput();
