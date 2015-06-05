@@ -59,32 +59,35 @@ int main(int argc, char **argv){
     }
 
     // Load files to watch
-    for (int i = 1; i < argc ; i++){
 
-        std::string argument = std::string(argv[i]);
-        if (    haveExt(argument,"png") || haveExt(argument,"PNG") ||
-                haveExt(argument,"jpg") || haveExt(argument,"JPG") || 
-                haveExt(argument,"jpeg") || haveExt(argument,"JPEG") ){
-            // Load Image and print it
-            printer.printImg(argument);
-        } else if ( haveExt(argument,"txt") || haveExt(argument,"TXT") ||
-                    haveExt(argument,"md") || haveExt(argument,"MD") ){
-            // Load Text to print
-            std::string text = "";
-            loadFromPath(argument,&text);
-            printer.print(text+"\n");
-        } else if (argument == "-s") {
-            std::string text = "";
-            for (int j = i+1; j < argc ; j++){
-                text += std::string(argv[j]) + " ";
-            }
-            printer.print(text+"\n");
-            break;
+    if (argc == 1) {
+        std::string line;
+        while (std::getline(std::cin, line)){
+            printer.print(line+"\n");
         }
-    }
-
-    if (argc == 0){
-        printer.printTestPage();
+    } else {
+        for (int i = 1; i < argc ; i++){
+            std::string argument = std::string(argv[i]);
+            if (    haveExt(argument,"png") || haveExt(argument,"PNG") ||
+                    haveExt(argument,"jpg") || haveExt(argument,"JPG") || 
+                    haveExt(argument,"jpeg") || haveExt(argument,"JPEG") ){
+                // Load Image and print it
+                printer.printImg(argument);
+            } else if ( haveExt(argument,"txt") || haveExt(argument,"TXT") ||
+                        haveExt(argument,"md") || haveExt(argument,"MD") ){
+                // Load Text to print
+                std::string text = "";
+                loadFromPath(argument,&text);
+                printer.print(text+"\n");
+            } else if (argument == "-s") {
+                std::string text = "";
+                for (int j = i+1; j < argc ; j++){
+                    text += std::string(argv[j]) + " ";
+                }
+                printer.print(text+"\n");
+                break;
+            }
+        }
     }
 
     // printer.close();
