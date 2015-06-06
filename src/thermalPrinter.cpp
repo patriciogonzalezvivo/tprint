@@ -215,7 +215,8 @@ void ThermalPrinter::printTestPage(){
 }
 
 void ThermalPrinter::print(const std::string& _text){
-    if (bConnected) {
+    if (bConnected) 
+    {
         // Characters perline
         uint nCharByLine = 32;
 
@@ -229,9 +230,9 @@ void ThermalPrinter::print(const std::string& _text){
 
         uint rest = _text.size() % nCharByLine;
         std::string remainer = _text.substr(index,rest);
-        for(uint i = 0; i < nCharByLine-rest; i++){
-            remainer += " ";
-        }
+        // for(uint i = 0; i < nCharByLine-rest; i++){
+        //     remainer += " ";
+        // }
         port->write(remainer);
         usleep(BYTE_TIME*_text.size());
     }
