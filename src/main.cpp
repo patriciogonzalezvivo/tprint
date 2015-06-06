@@ -55,7 +55,7 @@ int main(int argc, char **argv){
         std::cout << "successfully."<< std::endl;
     } else {
         std::cout << "error."<< std::endl;
-        // return 0;
+        return 0;
     }
 
     // Load files to watch
