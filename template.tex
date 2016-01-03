@@ -1,0 +1,60 @@
+\documentclass{article}
+
+% Adjust thermal printer boundaries on pixels 
+\pdfpxdimen=1in % 1 dpi
+\divide\pdfpxdimen by 170 % 96 dpi
+\usepackage[paperwidth=384px,margin=0px]{geometry}
+\usepackage{graphicx}
+\usepackage[pdftex]{hyperref} % llt: nicely formatted URLs
+
+%Styling
+\pagestyle{empty} % No page number
+\renewcommand{\thesection}{} %No section number
+\makeatletter
+\def\@seccntformat#1{\csname #1ignore\expandafter\endcsname\csname the#1\endcsname\quad}
+\let\sectionignore\@gobbletwo
+\let\latex@numberline\numberline
+\def\numberline#1{\if\relax#1\relax\else\latex@numberline{#1}\fi}
+\makeatother
+
+% Adjustable height
+\usepackage[active,tightpage]{preview}
+\usepackage{varwidth}
+
+% Overwrite \begin{figure}[htbp] with \begin{figure}[H]
+\usepackage{float}
+\let\origfigure=\figure
+\let\endorigfigure=\endfigure
+\renewenvironment{figure}[1][]{
+  \origfigure[H]
+}{
+  \endorigfigure
+}
+
+% Remove empty caption
+% http://tex.stackexchange.com/a/58638/5764
+\makeatletter
+\def\ifemptyarg#1{%
+  \if\relax\detokenize{#1}\relax % H. Oberdiek
+    \expandafter\@firstoftwo
+  \else
+    \expandafter\@secondoftwo
+  \fi}
+\makeatother
+
+\let\oldcaption\caption
+\AtBeginDocument{%
+  \renewcommand{\caption}[2][]{%
+    \ifemptyarg{#2}{}{\oldcaption[#1]{#2}}%
+  }%
+}
+
+\def\tightlist{}
+
+\begin{document}
+\begin{preview}
+\begin{varwidth}{\linewidth}
+\input{body.tex}
+\end{varwidth}
+\end{preview}
+\end{document}
