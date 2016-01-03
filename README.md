@@ -36,7 +36,14 @@ dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=d
 
 (e.g., remove ```console=ttyAMA0,115200``` and if there, ```kgdboc=ttyAMA0,115200```)
 
-Then from the command prompt enter the following command:
+Then if you are using a modern linux distribution with ```systemd``` execute this on the console:
+
+```bash
+sudo systemctl mask serial-getty@ttyAMA0.service
+```
+
+If you are using an old one with ```initd```, enter the following command:
+
 
 ```bash
 sudo nano /etc/inittab
@@ -77,6 +84,7 @@ git clone https://github.com/patriciogonzalezvivo/tprint.git
 cd tprint
 make
 sudo make install
+./install-dep.sh
 ```
 
 ## 2. Use
@@ -86,6 +94,7 @@ tprint -s Hello World
 tprint test.txt
 tprint text.jpg
 tprint text.* -s I just print all
+./mdprint.sh README.md
 ```
 
 ## Author
